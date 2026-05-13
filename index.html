@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Minimalist Fashion Lookbook</title>
+  
+  <!-- Preconnect: giảm thời gian load font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body class="bg-background text-on-background font-body-md antialiased selection:bg-primary selection:text-on-primary">
+
+  <!-- Header & Navigation -->
+  <header class="sticky top-0 z-40 flex flex-col w-full bg-surface/90 backdrop-blur-md px-margin-mobile pt-4 pb-2 border-b border-outline-variant transition-all duration-300">
+    <div class="flex items-center justify-between">
+      <h1 id="site-title" class="text-headline-md font-headline-md tracking-widest text-primary uppercase flex-1 text-center">22.tatuss</h1>
+      <button id="search-toggle-btn" class="text-primary hover:opacity-70 transition-opacity duration-300 p-2 -mr-2" aria-label="Tìm kiếm sản phẩm">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+    </div>
+    
+    <nav class="flex gap-6 mt-6 overflow-x-auto no-scrollbar pb-2 snap-x-mandatory" id="category-nav">
+      <!-- Categories will be injected here via JS -->
+    </nav>
+  </header>
+
+  <!-- ===== SEARCH OVERLAY ===== -->
+  <div id="search-overlay" class="search-overlay" aria-hidden="true">
+    <div class="search-panel">
+      <div class="search-input-wrapper">
+        <span class="material-symbols-outlined search-icon-input">search</span>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Tìm sản phẩm..."
+          class="search-input"
+          autocomplete="off"
+          aria-label="Nhập tên sản phẩm cần tìm"
+        >
+        <button id="search-close-btn" class="search-close-btn" aria-label="Đóng tìm kiếm">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div id="search-results" class="search-results" aria-live="polite">
+        <!-- Search results injected here -->
+      </div>
+    </div>
+  </div>
+  <div id="search-backdrop" class="search-backdrop"></div>
+  <!-- ===== END SEARCH OVERLAY ===== -->
+
+  <!-- Main Content -->
+  <main class="px-margin-mobile py-stack-md max-w-[1440px] mx-auto md:px-margin-desktop md:py-stack-lg tab-content" id="main-content">
+    
+    <!-- Hero Section -->
+    <section class="mb-4 grid grid-cols-1 gap-gutter">
+      <!-- Collection Info -->
+      <div>
+        <h2 id="collection-title" class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile text-on-surface mb-2">The Core Collection</h2>
+        <p id="collection-desc" class="text-body-md font-body-md text-secondary max-w-2xl">A curated selection of foundational pieces designed for effortless layering and timeless silhouette.</p>
+      </div>
+    </section>
+
+    <!-- Product Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-gutter gap-y-stack-md" id="product-grid">
+      <!-- Products will be injected here via JS -->
+    </div>
+
+  </main>
+
+  <!-- Full-Screen Zoom Modal -->
+  <div class="fixed inset-0 z-50 bg-surface transition-opacity duration-300 flex flex-col" id="zoom-modal" style="display:none; opacity:0; pointer-events:none;">
+    <header class="flex justify-between items-center px-margin-mobile py-4 border-b border-outline-variant">
+      <h2 class="text-body-lg font-body-lg text-primary" id="zoom-title">Product Detail</h2>
+      <button class="text-primary p-2 -mr-2 hover:opacity-70 transition-opacity" onclick="closeZoomModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+    <div class="flex-1 overflow-hidden relative">
+      <div class="flex w-full h-full overflow-x-auto snap-x-mandatory no-scrollbar overscroll-x-contain" id="zoom-gallery"></div>
+      <div class="absolute bottom-6 left-0 right-0 flex justify-center gap-2 pointer-events-none" id="zoom-indicators"></div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script type="module" src="./src/main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>Lookbook CMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 3px solid #000;
+      width: 20px;
+      height: 20px;
+      -webkit-animation: spin 1s linear infinite; /* Safari */
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen py-10 px-4">
+  <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <!-- Header -->
+    <div class="bg-black text-white px-8 py-6">
+      <h1 class="text-2xl font-semibold tracking-wide">Lookbook Admin</h1>
+      <p class="text-gray-400 text-sm mt-1">Đăng tải sản phẩm mới lên website trực tiếp</p>
+    </div>
+
+    <!-- Form -->
+    <form id="productForm" class="p-8 space-y-6">
+      <div class="grid grid-cols-2 gap-6">
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">Tên sản phẩm *</label>
+          <input type="text" id="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition" placeholder="VD: Optic White Baby Tee">
+        </div>
+        
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">Phân loại *</label>
+          <!-- Gợi ý một số category, hoặc tự gõ -->
+          <input type="text" id="category" required list="categories" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition" placeholder="VD: Baby Tee">
+          <datalist id="categories">
+            <option value="Baby Tee">
+            <option value="Boxy Tee">
+            <option value="Regular Tee">
+            <option value="Trousers">
+          </datalist>
+        </div>
+      </div>
+
+
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Mô tả chi tiết</label>
+        <textarea id="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition" placeholder="Mô tả sản phẩm..."></textarea>
+      </div>
+
+      <hr class="border-gray-100">
+
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium text-gray-800">Hình ảnh</h3>
+        
+        <div class="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh Chính (Hiển thị đầu tiên) *</label>
+          <input type="file" id="mainImage" accept="image/*" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800 cursor-pointer">
+        </div>
+
+        <div class="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh Phụ / Gallery (Tùy chọn, có thể chọn nhiều ảnh)</label>
+          <input type="file" id="galleryImages" accept="image/*" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-black hover:file:bg-gray-300 cursor-pointer">
+          <p class="text-xs text-gray-400 mt-2">Giữ phím Ctrl (hoặc Cmd) để chọn nhiều ảnh cùng lúc.</p>
+        </div>
+      </div>
+
+      <div class="pt-4 flex items-center justify-end">
+        <div id="statusMessage" class="mr-4 text-sm font-medium"></div>
+        <button type="submit" id="submitBtn" class="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition font-medium shadow-md">
+          <span id="btnText">Lưu Sản Phẩm</span>
+          <div id="loadingSpinner" class="loader ml-3 hidden"></div>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Hàm chuyển File thành chuỗi Base64
+    function getBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]); // Lấy phần data sau dấu phẩy
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    document.getElementById('productForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      const spinner = document.getElementById('loadingSpinner');
+      const statusMsg = document.getElementById('statusMessage');
+
+      // Đổi trạng thái UI
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+      btnText.textContent = 'Đang tải lên...';
+      spinner.classList.remove('hidden');
+      statusMsg.textContent = 'Xin vui lòng chờ, quá trình này có thể mất vài chục giây tùy dung lượng ảnh...';
+      statusMsg.className = 'mr-4 text-sm font-medium text-blue-600';
+
+      try {
+        // Thu thập dữ liệu text
+        const data = {
+          name: document.getElementById('name').value,
+          category: document.getElementById('category').value,
+          description: document.getElementById('description').value,
+        };
+
+        // Xử lý ảnh chính
+        const mainImageFile = document.getElementById('mainImage').files[0];
+        if (mainImageFile) {
+          data.mainImage = {
+            name: mainImageFile.name,
+            mimeType: mainImageFile.type,
+            base64: await getBase64(mainImageFile)
+          };
+        }
+
+        // Xử lý ảnh phụ
+        const galleryFiles = document.getElementById('galleryImages').files;
+        data.galleryImages = [];
+        for (let i = 0; i < galleryFiles.length; i++) {
+          data.galleryImages.push({
+            name: galleryFiles[i].name,
+            mimeType: galleryFiles[i].type,
+            base64: await getBase64(galleryFiles[i])
+          });
+        }
+
+        // Gọi Google Apps Script Server Function
+        google.script.run
+          .withSuccessHandler(function(response) {
+            // Thành công
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            btnText.textContent = 'Lưu Sản Phẩm';
+            spinner.classList.add('hidden');
+            
+            statusMsg.textContent = 'Đã thêm sản phẩm thành công! Tự động làm sạch form.';
+            statusMsg.className = 'mr-4 text-sm font-medium text-green-600';
+            
+            document.getElementById('productForm').reset();
+            
+            setTimeout(() => { statusMsg.textContent = ''; }, 5000);
+          })
+          .withFailureHandler(function(error) {
+            // Thất bại
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            btnText.textContent = 'Lưu Sản Phẩm';
+            spinner.classList.add('hidden');
+            
+            statusMsg.textContent = 'Lỗi: ' + error.message;
+            statusMsg.className = 'mr-4 text-sm font-medium text-red-600';
+          })
+          .saveProductToSheet(data); // Gọi hàm bên Code.gs
+
+      } catch (error) {
+        console.error(error);
+        statusMsg.textContent = 'Có lỗi xảy ra khi xử lý file.';
+        statusMsg.className = 'mr-4 text-sm font-medium text-red-600';
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        btnText.textContent = 'Lưu Sản Phẩm';
+        spinner.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  min-height: max(884px, 100dvh);
+  -webkit-overflow-scrolling: touch;
+  -webkit-touch-callout: none; /* iOS: chặn long-press menu save ảnh */
+  user-select: none;            /* Chặn bôi chọn text/ảnh */
+  -webkit-user-select: none;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* (Carousel auto-animation đã bị xóa — người dùng vuốt tay thay thế) */
+
+/* ========================================
+   TAB TRANSITION — Chuyển tab mượt mà
+   ======================================== */
+.tab-content {
+  animation: fadeSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Grid cards stagger */
+#product-grid .product-card {
+  animation: cardReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ========================================
+   SKELETON LOADING — Placeholder ảnh
+   ======================================== */
+.img-skeleton {
+  background: linear-gradient(90deg, #ececec 25%, #f8f8f8 50%, #ececec 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* Ảnh hiện ra mượt khi load xong */
+.product-img {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.product-img.loaded {
+  opacity: 1;
+}
+
+/* ========================================
+   IMAGE PROTECTION — Chống tải ảnh
+   ======================================== */
+/* Tắt drag-to-save trên tất cả ảnh */
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;   /* Chuột không tương tác trực tiếp với <img> */
+}
+
+/* Overlay trong suốt che lên ảnh — giả lập lớp bảo vệ trước con trỏ chuột */
+.card-swipe-slide::after,
+.zoom-img-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: default;
+}
+
+/* ========================================
+   CARD SWIPE STRIP — Vuốt xem ảnh trong card
+   ======================================== */
+.card-swipe-wrap {
+  touch-action: pan-x;
+}
+.card-swipe-strip {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  pointer-events: auto; /* Giữ tương tác cho container dù img có pointer-events:none */
+  cursor: grab;
+}
+.card-swipe-strip:active { cursor: grabbing; }
+.card-swipe-strip::-webkit-scrollbar { display: none; }
+
+.card-swipe-slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  overflow: hidden;
+}
+
+/* Dot indicators on card */
+.card-indicators {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+}
+.card-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  transition: background 0.25s, width 0.25s;
+  flex-shrink: 0;
+}
+.card-dot.active {
+  background: #fff;
+  width: 14px;
+  border-radius: 3px;
+}
+
+/* ========================================
+   HORIZONTAL SCROLL SNAP
+   ======================================== */
+.snap-x-mandatory { scroll-snap-type: x mandatory; }
+.snap-center      { scroll-snap-align: center; }
+
+/* ========================================
+   SEARCH OVERLAY
+   ======================================== */
+.search-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 46;
+  transform: translateY(-105%);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.25s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Active state */
+.search-overlay.active,
+.search-backdrop.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.search-overlay.active {
+  transform: translateY(0);
+}
+
+.search-panel {
+  background: #fff;
+  padding: 16px;
+  border-bottom: 1px solid #e8e8e8;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 999px;
+  padding: 0 16px;
+  gap: 10px;
+  border: 1.5px solid transparent;
+  transition: border-color 0.2s, background 0.2s;
+}
+.search-input-wrapper:focus-within {
+  background: #fff;
+  border-color: #1a1a1a;
+}
+
+.search-icon-input {
+  font-size: 20px;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 15px;
+  color: #1a1a1a;
+  padding: 12px 0;
+  letter-spacing: 0.01em;
+}
+.search-input::placeholder { color: #aaa; }
+
+.search-close-btn {
+  flex-shrink: 0;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s, color 0.2s;
+}
+.search-close-btn:hover { background: #eee; color: #1a1a1a; }
+.search-close-btn .material-symbols-outlined { font-size: 20px; }
+
+/* Search Results list */
+.search-results {
+  margin-top: 12px;
+  max-height: 55vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.search-empty {
+  text-align: center;
+  padding: 24px 0;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 14px;
+  color: #aaa;
+  letter-spacing: 0.03em;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.search-result-item:hover { background: #f8f8f8; padding-left: 10px; }
+.search-result-item:last-child { border-bottom: none; }
+
+.search-result-thumb {
+  width: 52px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #ececec;
+  flex-shrink: 0;
+}
+
+.search-result-info { flex: 1; min-width: 0; }
+
+.search-result-name {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-result-name mark {
+  background: #f5e642;
+  color: #1a1a1a;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.search-result-meta {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.search-result-arrow {
+  font-size: 18px;
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   PERFORMANCE
+   ======================================== */
+/* Bỏ qua render phần ngoài viewport — giúp trang cuộn mượt hơn khi có nhiều sản phẩm */
+#product-grid {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 600px;
+}
+
+/* ========================================
+   ACCESSIBILITY — Ưu tiên reduced-motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
