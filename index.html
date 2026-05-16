@@ -51,7 +51,9 @@
   <!-- Header & Navigation -->
   <header class="sticky top-0 z-40 flex flex-col w-full bg-surface/90 backdrop-blur-md px-margin-mobile pt-4 pb-2 border-b border-outline-variant transition-all duration-300">
     <div class="flex items-center justify-between">
-      <h1 id="site-title" class="text-headline-md font-headline-md tracking-widest text-primary uppercase flex-1 text-center">22.tatuss</h1>
+      <h1 id="site-title" class="text-headline-md font-headline-md tracking-widest text-primary uppercase flex-1 text-center flex justify-center">
+        <span class="skeleton-bar inline-block w-32 h-6"></span>
+      </h1>
       <button id="search-toggle-btn" class="text-primary hover:opacity-70 transition-opacity duration-300 p-2 -mr-2" aria-label="Tìm kiếm sản phẩm">
         <span class="material-symbols-outlined">search</span>
       </button>
@@ -98,8 +100,13 @@
     <section class="mb-4 grid grid-cols-1 gap-gutter">
       <!-- Collection Info -->
       <div>
-        <h2 id="collection-title" class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile text-on-surface mb-2">The Core Collection</h2>
-        <p id="collection-desc" class="text-body-md font-body-md text-secondary max-w-2xl">A curated selection of foundational pieces designed for effortless layering and timeless silhouette.</p>
+        <h2 id="collection-title" class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile text-on-surface mb-2">
+          <span class="skeleton-bar inline-block w-64 h-10 md:h-12"></span>
+        </h2>
+        <p id="collection-desc" class="text-body-md font-body-md text-secondary max-w-2xl">
+          <span class="skeleton-bar inline-block w-full max-w-lg h-5 mb-1"></span><br>
+          <span class="skeleton-bar inline-block w-3/4 max-w-md h-5"></span>
+        </p>
       </div>
     </section>
 
