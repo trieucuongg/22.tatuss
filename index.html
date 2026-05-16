@@ -5,16 +5,46 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>Minimalist Fashion Lookbook</title>
   
-  <!-- Preconnect: giảm thời gian load font -->
+  <!-- Preconnect: giảm thời gian DNS + TLS cho font & image CDN -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin>
+  <link rel="dns-prefetch" href="https://script.google.com">
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <!-- Critical Font: Preload chỉ weight thực sự dùng (300,400,500,700) -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;700&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Material Symbols: chỉ load icon thực sự dùng -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_forward_ios,close,search&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_forward_ios,close,search&display=swap" rel="stylesheet"></noscript>
   
   <!-- Custom Styles -->
   <link rel="stylesheet" href="./src/styles.css">
+
+  <!-- Inline Critical CSS: hiển thị skeleton ngay lập tức, không phải chờ external CSS -->
+  <style>
+    /* Skeleton hiển thị ngay trước khi stylesheet load xong */
+    .skeleton-bar {
+      background: linear-gradient(90deg, #ececec 25%, #f5f5f5 50%, #ececec 75%);
+      background-size: 200% 100%;
+      animation: _shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    .skeleton-card {
+      background: linear-gradient(90deg, #ececec 25%, #f5f5f5 50%, #ececec 75%);
+      background-size: 200% 100%;
+      animation: _shimmer 1.4s infinite;
+      border-radius: 4px;
+      aspect-ratio: 1;
+    }
+    @keyframes _shimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
+    }
+    /* Ẩn skeleton khi đã load xong */
+    .skeleton-hide { display: none; }
+  </style>
 </head>
 <body class="bg-background text-on-background font-body-md antialiased selection:bg-primary selection:text-on-primary">
 
@@ -28,7 +58,11 @@
     </div>
     
     <nav class="flex gap-6 mt-6 overflow-x-auto no-scrollbar pb-2 snap-x-mandatory" id="category-nav">
-      <!-- Categories will be injected here via JS -->
+      <!-- Skeleton tabs — hiển thị ngay khi load -->
+      <div class="skeleton-bar" style="width:32px;height:14px;flex-shrink:0"></div>
+      <div class="skeleton-bar" style="width:56px;height:14px;flex-shrink:0"></div>
+      <div class="skeleton-bar" style="width:48px;height:14px;flex-shrink:0"></div>
+      <div class="skeleton-bar" style="width:64px;height:14px;flex-shrink:0"></div>
     </nav>
   </header>
 
@@ -71,7 +105,11 @@
 
     <!-- Product Grid -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-gutter gap-y-stack-md" id="product-grid">
-      <!-- Products will be injected here via JS -->
+      <!-- Skeleton product cards — hiện ngay khi page load -->
+      <div class="flex flex-col"><div class="skeleton-card"></div><div class="skeleton-bar" style="width:70%;height:14px;margin-top:16px"></div></div>
+      <div class="flex flex-col"><div class="skeleton-card"></div><div class="skeleton-bar" style="width:55%;height:14px;margin-top:16px"></div></div>
+      <div class="flex flex-col hidden md:flex"><div class="skeleton-card"></div><div class="skeleton-bar" style="width:60%;height:14px;margin-top:16px"></div></div>
+      <div class="flex flex-col hidden lg:flex"><div class="skeleton-card"></div><div class="skeleton-bar" style="width:50%;height:14px;margin-top:16px"></div></div>
     </div>
 
   </main>

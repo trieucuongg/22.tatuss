@@ -1,110 +1,67 @@
-// URL của Google Apps Script
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbze5byhjvgs4WssT1dpEbCxFIgzp3IsjttmdQaWpxxAZvND7sS-_32VfX75Im3diDiJ/exec';
+import { createClient } from '@supabase/supabase-js';
 
-// TTL cache: 5 phút (ms)
-const CACHE_TTL = 5 * 60 * 1000;
-
-let localTimestamp = null;
-
-export async function fetchFromAPI(action, params = {}) {
-  const url = new URL(APPS_SCRIPT_URL);
-  url.searchParams.append('action', action);
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.append(key, value);
-  }
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Network response was not ok');
-    return await response.json();
-  } catch (error) {
-    console.error('Lỗi khi fetch API:', error);
-    return null;
-  }
-}
-
-// ============================================================
-// Cache helpers với TTL — tự hết hạn sau CACHE_TTL
-// ============================================================
-
-function setCache(key, data) {
-  localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
-}
-
-function getCache(key) {
-  const raw = localStorage.getItem(key);
-  if (!raw) return null;
-  try {
-    const { data, ts } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) {
-      localStorage.removeItem(key);
-      return null; // Cache đã hết hạn
-    }
-    return data;
-  } catch {
-    localStorage.removeItem(key);
-    return null;
-  }
-}
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ccvtwjxkekipkaxmwobh.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_jyApZ7a7V02t5x6hx2CRfg_w_v3TqgH';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export function clearCache() {
-  // Chỉ xóa cache của lookbook, không xóa dữ liệu khác
-  Object.keys(localStorage)
-    .filter(k => k.startsWith('lookbook_'))
-    .forEach(k => localStorage.removeItem(k));
+  // Not needed since Supabase Client is fast, but we keep this to satisfy main.js
 }
 
-// ============================================================
-// Auto-update: so sánh timestamp với server
-// ============================================================
-
 export async function checkForUpdates() {
-  const serverTimestamp = await fetchFromAPI('getLastUpdated');
-
-  // Lần đầu tải trang
-  if (localTimestamp === null) {
-    localTimestamp = serverTimestamp;
+  // Simple check using updated_at from site_info table
+  const { data } = await supabase.from('site_info').select('updated_at').limit(1).single();
+  if (!data) return false;
+  
+  if (!window.localTimestamp) {
+    window.localTimestamp = data.updated_at;
     return false;
   }
-
-  // Nếu phát hiện timestamp mới → xóa cache và yêu cầu render lại
-  if (serverTimestamp && String(serverTimestamp) !== String(localTimestamp)) {
-    localTimestamp = serverTimestamp;
-    clearCache();
+  
+  if (window.localTimestamp !== data.updated_at) {
+    window.localTimestamp = data.updated_at;
     return true;
   }
-
+  
   return false;
 }
 
-// ============================================================
-// API Functions — có TTL cache
-// ============================================================
-
 export async function getCategories() {
-  const cached = getCache('lookbook_categories');
-  if (cached) return cached;
-
-  const data = await fetchFromAPI('getCategories');
-  if (data) setCache('lookbook_categories', data);
-  return data;
+  const { data, error } = await supabase.from('categories').select('name').order('sort_order', { ascending: true });
+  if (error) {
+    console.error('Lỗi khi fetch categories:', error);
+    return [];
+  }
+  return data.map(c => c.name);
 }
 
 export async function getProducts(category = 'all') {
-  const cacheKey = `lookbook_products_${category}`;
-  const cached = getCache(cacheKey);
-  if (cached) return cached;
-
-  const data = await fetchFromAPI('getProducts', { category });
-  if (data) setCache(cacheKey, data);
+  let query = supabase.from('products').select('*');
+  if (category !== 'all') {
+    query = query.eq('category', category);
+  }
+  const { data, error } = await query;
+  if (error) {
+    console.error('Lỗi khi fetch products:', error);
+    return [];
+  }
   return data;
 }
 
 export async function getSiteInfo() {
-  const cached = getCache('lookbook_site_info');
-  if (cached) return cached;
-
-  const data = await fetchFromAPI('getSiteInfo');
-  if (data) setCache('lookbook_site_info', data);
+  const { data, error } = await supabase.from('site_info').select('*').limit(1).single();
+  if (error) {
+    console.error('Lỗi khi fetch site info:', error);
+    return null;
+  }
   return data;
+}
+
+export async function fetchAllInitialData() {
+  const [siteInfo, categories, products] = await Promise.all([
+    getSiteInfo(),
+    getCategories(),
+    getProducts('all')
+  ]);
+  return { siteInfo, categories, products };
 }

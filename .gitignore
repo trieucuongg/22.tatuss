@@ -27,6 +27,4 @@ Thumbs.db
 # Apps Script deploy (không cần push lên web repo)
 .clasp.json
 appsscript.json
-Code.gs
-Admin.html
 products.csv

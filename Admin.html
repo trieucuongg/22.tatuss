@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
-  <title>Lookbook CMS</title>
+  <title>Lookbook CMS - Supabase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -14,7 +14,7 @@
       border-top: 3px solid #000;
       width: 20px;
       height: 20px;
-      -webkit-animation: spin 1s linear infinite; /* Safari */
+      -webkit-animation: spin 1s linear infinite;
       animation: spin 1s linear infinite;
     }
     @keyframes spin {
@@ -24,11 +24,36 @@
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen py-10 px-4">
-  <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+
+  <!-- Login Overlay -->
+  <div id="loginOverlay" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm">
+      <h2 class="text-xl font-bold mb-6 text-center">Đăng nhập Admin</h2>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" id="authEmail" required class="w-full px-4 py-2 border rounded-lg focus:ring-black outline-none" placeholder="admin@example.com">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+          <input type="password" id="authPassword" required class="w-full px-4 py-2 border rounded-lg focus:ring-black outline-none">
+        </div>
+        <p id="loginError" class="text-red-500 text-sm hidden"></p>
+        <button type="submit" class="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition font-medium">
+          Đăng nhập
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden" id="appContent" style="display: none;">
     <!-- Header -->
-    <div class="bg-black text-white px-8 py-6">
-      <h1 class="text-2xl font-semibold tracking-wide">Lookbook Admin</h1>
-      <p class="text-gray-400 text-sm mt-1">Đăng tải sản phẩm mới lên website trực tiếp</p>
+    <div class="bg-black text-white px-8 py-6 flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-wide">Lookbook Admin</h1>
+        <p class="text-gray-400 text-sm mt-1">Supabase Backend</p>
+      </div>
+      <button id="logoutBtn" class="text-sm bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition">Đăng xuất</button>
     </div>
 
     <!-- Form -->
@@ -41,17 +66,10 @@
         
         <div class="space-y-2">
           <label class="block text-sm font-medium text-gray-700">Phân loại *</label>
-          <!-- Gợi ý một số category, hoặc tự gõ -->
-          <input type="text" id="category" required list="categories" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition" placeholder="VD: Baby Tee">
-          <datalist id="categories">
-            <option value="Baby Tee">
-            <option value="Boxy Tee">
-            <option value="Regular Tee">
-            <option value="Trousers">
-          </datalist>
+          <input type="text" id="category" required list="categoriesList" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition" placeholder="VD: Baby Tee">
+          <datalist id="categoriesList"></datalist>
         </div>
       </div>
-
 
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Mô tả chi tiết</label>
@@ -69,9 +87,9 @@
         </div>
 
         <div class="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh Phụ / Gallery (Tùy chọn, có thể chọn nhiều ảnh)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Ảnh Phụ / Gallery (Tùy chọn)</label>
           <input type="file" id="galleryImages" accept="image/*" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-black hover:file:bg-gray-300 cursor-pointer">
-          <p class="text-xs text-gray-400 mt-2">Giữ phím Ctrl (hoặc Cmd) để chọn nhiều ảnh cùng lúc.</p>
+          <p class="text-xs text-gray-400 mt-2">Giữ phím Ctrl (hoặc Cmd) để chọn nhiều ảnh.</p>
         </div>
       </div>
 
@@ -85,100 +103,6 @@
     </form>
   </div>
 
-  <script>
-    // Hàm chuyển File thành chuỗi Base64
-    function getBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]); // Lấy phần data sau dấu phẩy
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
-      });
-    }
-
-    document.getElementById('productForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const submitBtn = document.getElementById('submitBtn');
-      const btnText = document.getElementById('btnText');
-      const spinner = document.getElementById('loadingSpinner');
-      const statusMsg = document.getElementById('statusMessage');
-
-      // Đổi trạng thái UI
-      submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
-      btnText.textContent = 'Đang tải lên...';
-      spinner.classList.remove('hidden');
-      statusMsg.textContent = 'Xin vui lòng chờ, quá trình này có thể mất vài chục giây tùy dung lượng ảnh...';
-      statusMsg.className = 'mr-4 text-sm font-medium text-blue-600';
-
-      try {
-        // Thu thập dữ liệu text
-        const data = {
-          name: document.getElementById('name').value,
-          category: document.getElementById('category').value,
-          description: document.getElementById('description').value,
-        };
-
-        // Xử lý ảnh chính
-        const mainImageFile = document.getElementById('mainImage').files[0];
-        if (mainImageFile) {
-          data.mainImage = {
-            name: mainImageFile.name,
-            mimeType: mainImageFile.type,
-            base64: await getBase64(mainImageFile)
-          };
-        }
-
-        // Xử lý ảnh phụ
-        const galleryFiles = document.getElementById('galleryImages').files;
-        data.galleryImages = [];
-        for (let i = 0; i < galleryFiles.length; i++) {
-          data.galleryImages.push({
-            name: galleryFiles[i].name,
-            mimeType: galleryFiles[i].type,
-            base64: await getBase64(galleryFiles[i])
-          });
-        }
-
-        // Gọi Google Apps Script Server Function
-        google.script.run
-          .withSuccessHandler(function(response) {
-            // Thành công
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-            btnText.textContent = 'Lưu Sản Phẩm';
-            spinner.classList.add('hidden');
-            
-            statusMsg.textContent = 'Đã thêm sản phẩm thành công! Tự động làm sạch form.';
-            statusMsg.className = 'mr-4 text-sm font-medium text-green-600';
-            
-            document.getElementById('productForm').reset();
-            
-            setTimeout(() => { statusMsg.textContent = ''; }, 5000);
-          })
-          .withFailureHandler(function(error) {
-            // Thất bại
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-            btnText.textContent = 'Lưu Sản Phẩm';
-            spinner.classList.add('hidden');
-            
-            statusMsg.textContent = 'Lỗi: ' + error.message;
-            statusMsg.className = 'mr-4 text-sm font-medium text-red-600';
-          })
-          .saveProductToSheet(data); // Gọi hàm bên Code.gs
-
-      } catch (error) {
-        console.error(error);
-        statusMsg.textContent = 'Có lỗi xảy ra khi xử lý file.';
-        statusMsg.className = 'mr-4 text-sm font-medium text-red-600';
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-        btnText.textContent = 'Lưu Sản Phẩm';
-        spinner.classList.add('hidden');
-      }
-    });
-  </script>
+  <script type="module" src="./src/admin.js"></script>
 </body>
 </html>
