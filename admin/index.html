@@ -24,9 +24,11 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .tab-btn.active { border-bottom: 2px solid black; font-weight: 600; color: black; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen py-10 px-4">
+<body class="bg-gray-50 min-h-screen py-4 md:py-10 px-2 md:px-4">
 
   <!-- Login Overlay -->
   <div id="loginOverlay" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
@@ -51,16 +53,16 @@
 
   <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden" id="appContent" style="display: none;">
     <!-- Header -->
-    <div class="bg-black text-white px-8 py-6 flex justify-between items-center">
+    <div class="bg-black text-white px-4 md:px-8 py-4 md:py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
       <div>
-        <h1 class="text-2xl font-semibold tracking-wide">Lookbook Admin</h1>
-        <p class="text-gray-400 text-sm mt-1">Quản lý toàn diện cửa hàng của bạn</p>
+        <h1 class="text-xl md:text-2xl font-semibold tracking-wide">Lookbook Admin</h1>
+        <p class="text-gray-400 text-xs md:text-sm mt-1">Quản lý toàn diện cửa hàng của bạn</p>
       </div>
       <button id="logoutBtn" class="text-sm bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition">Đăng xuất</button>
     </div>
 
     <!-- Tabs Navigation -->
-    <div class="flex border-b px-8 mt-2 space-x-6">
+    <div class="flex border-b px-4 md:px-8 mt-2 space-x-4 md:space-x-6 overflow-x-auto whitespace-nowrap text-sm md:text-base scrollbar-hide">
       <button class="tab-btn active text-gray-500 pb-3 transition" data-target="tab-new-product">Thêm Sản Phẩm Mới</button>
       <button class="tab-btn text-gray-500 pb-3 transition" data-target="tab-manage-products">Quản Lý Sản Phẩm</button>
       <button class="tab-btn text-gray-500 pb-3 transition" data-target="tab-site-info">Cấu Hình Website</button>
@@ -68,8 +70,8 @@
 
     <!-- TAB 1: Thêm Sản Phẩm -->
     <div id="tab-new-product" class="tab-content active">
-      <form id="productForm" class="p-8 space-y-6">
-        <div class="grid grid-cols-2 gap-6">
+      <form id="productForm" class="p-4 md:p-8 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div class="space-y-2">
             <label class="block text-sm font-medium text-gray-700">Tên sản phẩm *</label>
             <input type="text" id="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none transition" placeholder="VD: Optic White Baby Tee">
@@ -108,9 +110,9 @@
           </div>
         </div>
 
-        <div class="pt-4 flex items-center justify-end">
-          <div id="statusMessage" class="mr-4 text-sm font-medium"></div>
-          <button type="submit" id="submitBtn" class="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition font-medium shadow-md">
+        <div class="pt-4 flex flex-col md:flex-row items-center justify-end gap-4 md:gap-0">
+          <div id="statusMessage" class="md:mr-4 text-sm font-medium text-center"></div>
+          <button type="submit" id="submitBtn" class="w-full md:w-auto flex items-center justify-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition font-medium shadow-md">
             <span id="btnText">Lưu Sản Phẩm</span>
             <div id="loadingSpinner" class="loader ml-3 hidden"></div>
           </button>
@@ -119,8 +121,8 @@
     </div>
 
     <!-- TAB 2: Quản Lý Sản Phẩm -->
-    <div id="tab-manage-products" class="tab-content p-8">
-      <div class="flex justify-between items-center mb-4">
+    <div id="tab-manage-products" class="tab-content p-4 md:p-8">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-4">
         <h2 class="text-lg font-semibold">Danh sách sản phẩm</h2>
         <button id="refreshProductsBtn" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition">Làm mới</button>
       </div>
@@ -144,7 +146,7 @@
     </div>
 
     <!-- TAB 3: Cấu Hình Website -->
-    <div id="tab-site-info" class="tab-content p-8">
+    <div id="tab-site-info" class="tab-content p-4 md:p-8">
       <form id="siteInfoForm" class="space-y-6 max-w-2xl">
         <div class="space-y-2">
           <label class="block text-sm font-medium text-gray-700">Tên Website (Title)</label>
