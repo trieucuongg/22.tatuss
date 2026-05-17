@@ -121,16 +121,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- TAB 1: ADD PRODUCT ---
   async function loadCategories() {
-    const { data, error } = await supabase.from('categories').select('name');
+    const { data, error } = await supabase.from('categories').select('name').order('sort_order', { ascending: true });
     if (!error && data) {
-      const datalist = document.getElementById('categoriesList');
-      datalist.innerHTML = '';
+      const select = document.getElementById('category');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="" disabled selected>Chọn phân loại</option>';
       data.forEach(cat => {
         const option = document.createElement('option');
         option.value = cat.name;
-        datalist.appendChild(option);
+        option.textContent = cat.name;
+        select.appendChild(option);
       });
+      if (currentValue && data.some(c => c.name === currentValue)) {
+        select.value = currentValue;
+      }
     }
+  }
+
+  const addCategoryBtn = document.getElementById('addCategoryBtn');
+  if (addCategoryBtn) {
+    addCategoryBtn.addEventListener('click', async () => {
+      const newCategory = prompt('Nhập tên phân loại mới (vui lòng kiểm tra chính tả kĩ nhé):');
+      if (newCategory && newCategory.trim() !== '') {
+        const catName = newCategory.trim();
+        const { error } = await supabase.from('categories').upsert([{ name: catName }], { onConflict: 'name' });
+        if (error) {
+          alert('Lỗi khi thêm phân loại: ' + error.message);
+        } else {
+          await loadCategories();
+          document.getElementById('category').value = catName;
+          alert(`Đã thêm phân loại "${catName}"!`);
+        }
+      }
+    });
   }
 
   const productForm = document.getElementById('productForm');
@@ -163,12 +186,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         imageUrls.push(supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl);
       }
 
+      // Upsert category FIRST to ensure the foreign key exists in categories table
+      await supabase.from('categories').upsert([{ name: category }], { onConflict: 'name' });
+
       const { error: insertErr } = await supabase.from('products').insert([
         { id: productId, name, category, description, images: imageUrls, is_visible: true }
       ]);
       if (insertErr) throw insertErr;
-
-      await supabase.from('categories').upsert([{ name: category }], { onConflict: 'name' });
       
       // Trigger frontend reload by touching site_info
       await touchSiteInfo();
