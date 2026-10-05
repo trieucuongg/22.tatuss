@@ -306,6 +306,111 @@ img {
 }
 
 /* ========================================
+   PRODUCT DETAIL — Editorial luxury minimal
+   ======================================== */
+.pd-layout {
+  max-width: 1440px;
+  margin: 0 auto;
+  animation: pdIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes pdIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pd-gallery-wrap {
+  position: relative;
+  width: 100%;
+  height: 68vh;
+  min-height: 360px;
+  background: #fff;
+}
+.pd-counter {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 3;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  color: #1a1c1c;
+  background: rgba(249, 249, 249, 0.85);
+  backdrop-filter: blur(6px);
+  padding: 4px 10px;
+  pointer-events: none;
+}
+.pd-counter:empty { display: none; }
+
+.pd-info {
+  padding: 40px 20px 96px;
+  max-width: 760px;
+}
+.pd-name {
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: #000;
+}
+.pd-rule {
+  border: 0;
+  border-top: 1px solid #c4c7c7;
+  margin: 32px 0 28px;
+  width: 48px;
+}
+.pd-heading {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #000;
+  margin-bottom: 14px;
+}
+.pd-desc {
+  font-size: 16px;
+  line-height: 1.75;
+  font-weight: 300;
+  color: #1a1c1c;
+  white-space: pre-line;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.pd-desc-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pd-more {
+  margin-top: 16px;
+  padding: 0 0 2px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #000;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #000;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.pd-more:hover { opacity: 0.6; }
+.pd-more:focus-visible { outline: 2px solid #000; outline-offset: 4px; }
+
+@media (min-width: 900px) {
+  .pd-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .pd-media { position: sticky; top: 0; }
+  .pd-gallery-wrap { height: calc(100vh - 57px); }
+  .pd-info { padding: 72px 64px 96px 56px; }
+  .pd-name { font-size: 30px; }
+}
+
+/* ========================================
    PERFORMANCE
    ======================================== */
 /* Bỏ qua render phần ngoài viewport — giúp trang cuộn mượt hơn khi có nhiều sản phẩm */

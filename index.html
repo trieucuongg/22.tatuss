@@ -122,16 +122,32 @@
   </main>
 
   <!-- Full-Screen Zoom Modal -->
-  <div class="fixed inset-0 z-50 bg-surface transition-opacity duration-300 flex flex-col" id="zoom-modal" style="display:none; opacity:0; pointer-events:none;">
-    <header class="flex justify-between items-center px-margin-mobile py-4 border-b border-outline-variant">
-      <h2 class="text-body-lg font-body-lg text-primary" id="zoom-title">Product Detail</h2>
-      <button class="text-primary p-2 -mr-2 hover:opacity-70 transition-opacity" onclick="closeZoomModal()">
+  <div class="fixed inset-0 z-50 bg-surface transition-opacity duration-300 flex flex-col" id="zoom-modal" role="dialog" aria-modal="true" aria-labelledby="zoom-title" style="display:none; opacity:0; pointer-events:none;">
+    <header class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 border-b border-outline-variant bg-surface">
+      <span class="text-label-caps font-label-caps text-secondary uppercase" id="zoom-category">Chi tiết</span>
+      <button class="text-primary p-2 -mr-2 hover:opacity-70 transition-opacity" onclick="closeZoomModal()" aria-label="Đóng">
         <span class="material-symbols-outlined">close</span>
       </button>
     </header>
-    <div class="flex-1 overflow-hidden relative">
-      <div class="flex w-full h-full overflow-x-auto snap-x-mandatory no-scrollbar overscroll-x-contain" id="zoom-gallery"></div>
-      <div class="absolute bottom-6 left-0 right-0 flex justify-center gap-2 pointer-events-none" id="zoom-indicators"></div>
+    <div class="flex-1 overflow-y-auto no-scrollbar" id="zoom-scroll">
+      <article class="pd-layout">
+        <div class="pd-media">
+          <div class="pd-gallery-wrap">
+            <div class="flex w-full h-full overflow-x-auto snap-x-mandatory no-scrollbar overscroll-x-contain" id="zoom-gallery"></div>
+            <div class="absolute bottom-5 left-0 right-0 flex justify-center gap-2 pointer-events-none" id="zoom-indicators"></div>
+            <span class="pd-counter" id="zoom-counter"></span>
+          </div>
+        </div>
+        <div class="pd-info">
+          <h2 class="pd-name" id="zoom-title">Product Detail</h2>
+          <hr class="pd-rule">
+          <section id="zoom-desc-section" aria-labelledby="zoom-desc-heading">
+            <h3 class="pd-heading" id="zoom-desc-heading">Mô tả chi tiết</h3>
+            <div class="pd-desc pd-desc-clamped" id="zoom-desc"></div>
+            <button type="button" class="pd-more" id="zoom-desc-toggle" hidden>Xem thêm</button>
+          </section>
+        </div>
+      </article>
     </div>
   </div>
 

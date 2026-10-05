@@ -79,7 +79,7 @@ function renderSearchResults(query) {
       closeSearch();
       // Đợi overlay đóng xong (300ms) rồi mới mở modal
       setTimeout(() => {
-        openZoomModal(product.name, encodeURIComponent(JSON.stringify(product.images)));
+        openZoomModal(product.name, encodeURIComponent(JSON.stringify(product.images || [])), product.description, product.category);
       }, 310);
     });
   });
@@ -154,16 +154,39 @@ window.closeZoomModal = function() {
   }, 300);
 };
 
-window.openZoomModal = function(productName, imagesStr) {
+window.openZoomModal = function(productName, imagesStr, description = '', category = '') {
   const images = JSON.parse(decodeURIComponent(imagesStr));
   const modal   = document.getElementById('zoom-modal');
   const gallery = document.getElementById('zoom-gallery');
   const indicatorsContainer = document.getElementById('zoom-indicators');
   const title   = document.getElementById('zoom-title');
+  const counter = document.getElementById('zoom-counter');
 
   title.textContent = productName;
+  document.getElementById('zoom-category').textContent = category || 'Chi tiết sản phẩm';
   gallery.innerHTML = '';
+  gallery.scrollLeft = 0;
   indicatorsContainer.innerHTML = '';
+  document.getElementById('zoom-scroll').scrollTop = 0;
+  counter.textContent = images.length > 1 ? `1 / ${images.length}` : '';
+
+  // Mô tả chi tiết
+  const descSection = document.getElementById('zoom-desc-section');
+  const descEl = document.getElementById('zoom-desc');
+  const toggleBtn = document.getElementById('zoom-desc-toggle');
+  const text = (description || '').trim();
+  descSection.hidden = !text;
+  descEl.textContent = text; // textContent: an toàn XSS; CSS giữ xuống dòng
+  descEl.classList.add('pd-desc-clamped');
+  toggleBtn.hidden = true;
+  toggleBtn.textContent = 'Xem thêm';
+  toggleBtn.onclick = () => {
+    const collapsed = descEl.classList.toggle('pd-desc-clamped');
+    toggleBtn.textContent = collapsed ? 'Xem thêm' : 'Thu gọn';
+  };
+  requestAnimationFrame(() => {
+    toggleBtn.hidden = descEl.scrollHeight <= descEl.clientHeight + 2;
+  });
 
   images.forEach((src, index) => {
     // Wrap ảnh trong div có class zoom-img-wrap (CSS overlay sẽ áp lên)
@@ -181,15 +204,16 @@ window.openZoomModal = function(productName, imagesStr) {
     indicatorsContainer.appendChild(indicator);
   });
 
-  gallery.addEventListener('scroll', () => {
+  gallery.onscroll = () => {
     const activeIndex = Math.round(gallery.scrollLeft / gallery.clientWidth);
+    if (images.length > 1) counter.textContent = `${activeIndex + 1} / ${images.length}`;
     const indicators  = indicatorsContainer.children;
     for (let i = 0; i < indicators.length; i++) {
       indicators[i].className = i === activeIndex
         ? 'w-4 h-2 rounded-full transition-all duration-300 bg-primary'
         : 'w-2 h-2 rounded-full transition-all duration-300 bg-outline-variant';
     }
-  }, { passive: true });
+  };
 
   // Hiện modal với display: flex để flex-1 hoạt động đúng
   modal.style.display = 'flex';
@@ -330,7 +354,7 @@ async function renderProducts() {
     // Tap on card opens zoom modal (only if not swiping)
     card.addEventListener('click', () => {
       if (!isSwiping) {
-        openZoomModal(product.name, encodeURIComponent(JSON.stringify(images)));
+        openZoomModal(product.name, encodeURIComponent(JSON.stringify(images)), product.description, product.category);
       }
     });
 
