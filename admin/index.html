@@ -135,6 +135,7 @@
               <th class="px-4 py-3 font-medium text-gray-600">Tên</th>
               <th class="px-4 py-3 font-medium text-gray-600">Phân loại</th>
               <th class="px-4 py-3 font-medium text-gray-600 text-center">Hiển thị</th>
+              <th class="px-4 py-3 font-medium text-gray-600 text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody id="productsTableBody" class="divide-y">
@@ -170,6 +171,42 @@
       </form>
     </div>
 
+  </div>
+
+  <!-- Edit Product Modal -->
+  <div id="editModal" class="fixed inset-0 bg-black/50 z-40 hidden items-start md:items-center justify-center p-2 md:p-6 overflow-y-auto">
+    <form id="editForm" class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-4 md:p-8 space-y-5 my-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-semibold">Chỉnh sửa sản phẩm <span id="editProductId" class="text-gray-400 text-sm font-normal"></span></h3>
+        <button type="button" id="editCloseBtn" class="text-gray-400 hover:text-black text-2xl leading-none">&times;</button>
+      </div>
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Tên sản phẩm *</label>
+        <input type="text" id="editName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none">
+      </div>
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Phân loại *</label>
+        <div class="flex gap-2">
+          <select id="editCategory" required class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none"></select>
+          <button type="button" id="editAddCategoryBtn" class="px-4 py-2 bg-gray-100 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 transition shrink-0">Thêm mới</button>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Mô tả chi tiết</label>
+        <textarea id="editDescription" rows="5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none"></textarea>
+      </div>
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Hình ảnh <span class="text-xs text-gray-400">(ảnh đầu tiên là ảnh chính)</span></label>
+        <div id="editImages" class="grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
+        <input type="file" id="editNewImages" accept="image/*" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-black hover:file:bg-gray-300 cursor-pointer">
+        <p class="text-xs text-gray-400">Chọn thêm ảnh mới để thêm vào cuối danh sách.</p>
+      </div>
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <div id="editStatus" class="text-sm font-medium text-red-600 mr-auto"></div>
+        <button type="button" id="editCancelBtn" class="px-5 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-sm font-medium">Hủy</button>
+        <button type="submit" id="editSaveBtn" class="px-5 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition text-sm font-medium">Lưu thay đổi</button>
+      </div>
+    </form>
   </div>
 
   <script type="module" src="../src/admin.js"></script>

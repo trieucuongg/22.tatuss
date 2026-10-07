@@ -213,6 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const refreshProductsBtn = document.getElementById('refreshProductsBtn');
   refreshProductsBtn.addEventListener('click', loadProductsList);
 
+  let productsCache = {};
   async function loadProductsList() {
     const tbody = document.getElementById('productsTableBody');
     const loading = document.getElementById('productsLoading');
@@ -223,16 +224,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     loading.classList.add('hidden');
 
     if (error) {
-      tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Lỗi khi tải dữ liệu.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-4 text-center text-red-500">Lỗi khi tải dữ liệu.</td></tr>`;
       return;
     }
 
     if (products.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Chưa có sản phẩm nào.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-4 text-center text-gray-500">Chưa có sản phẩm nào.</td></tr>`;
       return;
     }
 
+    productsCache = {};
     products.forEach(p => {
+      productsCache[p.id] = p;
       const tr = document.createElement('tr');
       const imgUrl = p.images && p.images.length > 0 ? p.images[0] : '';
       const imgHtml = imgUrl ? `<img src="${imgUrl}" class="w-10 h-10 object-cover rounded">` : `<div class="w-10 h-10 bg-gray-200 rounded"></div>`;
@@ -243,12 +246,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       tr.innerHTML = `
         <td class="px-4 py-3 text-gray-600">${p.id}</td>
         <td class="px-4 py-3">${imgHtml}</td>
-        <td class="px-4 py-3 font-medium">${p.name}</td>
-        <td class="px-4 py-3">${p.category}</td>
+        <td class="px-4 py-3 font-medium">${escapeHtml(p.name)}</td>
+        <td class="px-4 py-3">${escapeHtml(p.category)}</td>
         <td class="px-4 py-3 text-center">
           <button class="toggle-btn w-11 h-6 rounded-full relative transition-colors duration-200 focus:outline-none ${toggleClass}" data-id="${p.id}" data-state="${p.is_visible}">
             <div class="toggle-dot inline-block w-4 h-4 bg-white rounded-full absolute top-1 left-0 transition-transform duration-200 ${toggleDotClass}"></div>
           </button>
+        </td>
+        <td class="px-4 py-3 text-center">
+          <button class="edit-btn px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition" data-id="${p.id}">Sửa</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -282,7 +288,148 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     });
+
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+    });
   }
+
+  // --- EDIT PRODUCT ---
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  const editModal = document.getElementById('editModal');
+  const editForm = document.getElementById('editForm');
+  const editStatus = document.getElementById('editStatus');
+  let editingId = null;
+  let editImages = [];
+
+  function renderEditImages() {
+    const box = document.getElementById('editImages');
+    box.innerHTML = '';
+    editImages.forEach((url, i) => {
+      const div = document.createElement('div');
+      div.className = 'relative group';
+      div.innerHTML = `
+        <img src="${escapeHtml(url)}" class="w-full aspect-square object-cover rounded-lg border ${i === 0 ? 'ring-2 ring-black' : ''}">
+        ${i === 0 ? '<span class="absolute bottom-1 left-1 bg-black text-white text-[10px] px-1.5 py-0.5 rounded">Chính</span>' : '<button type="button" data-act="main" class="absolute bottom-1 left-1 bg-white/90 text-[10px] px-1.5 py-0.5 rounded border">Đặt làm chính</button>'}
+        <button type="button" data-act="remove" class="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full text-sm leading-none">&times;</button>
+      `;
+      div.querySelector('[data-act="remove"]').addEventListener('click', () => {
+        editImages.splice(i, 1);
+        renderEditImages();
+      });
+      const mainBtn = div.querySelector('[data-act="main"]');
+      if (mainBtn) mainBtn.addEventListener('click', () => {
+        const [u] = editImages.splice(i, 1);
+        editImages.unshift(u);
+        renderEditImages();
+      });
+      box.appendChild(div);
+    });
+  }
+
+  function setEditCategories(selected) {
+    const src = document.getElementById('category');
+    const sel = document.getElementById('editCategory');
+    sel.innerHTML = '';
+    Array.from(src.options).filter(o => o.value).forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.textContent;
+      sel.appendChild(opt);
+    });
+    if (selected && !Array.from(sel.options).some(o => o.value === selected)) {
+      const opt = document.createElement('option');
+      opt.value = selected;
+      opt.textContent = selected;
+      sel.appendChild(opt);
+    }
+    sel.value = selected;
+  }
+
+  async function openEditModal(id) {
+    const p = productsCache[id];
+    if (!p) return;
+    editingId = id;
+    editStatus.textContent = '';
+    document.getElementById('editProductId').textContent = id;
+    document.getElementById('editName').value = p.name || '';
+    document.getElementById('editDescription').value = p.description || '';
+    document.getElementById('editNewImages').value = '';
+    setEditCategories(p.category);
+    editImages = Array.isArray(p.images) ? [...p.images] : [];
+    renderEditImages();
+    editModal.classList.remove('hidden');
+    editModal.classList.add('flex');
+  }
+
+  function closeEditModal() {
+    editModal.classList.add('hidden');
+    editModal.classList.remove('flex');
+    editingId = null;
+  }
+
+  document.getElementById('editCloseBtn').addEventListener('click', closeEditModal);
+  document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+
+  document.getElementById('editAddCategoryBtn').addEventListener('click', async () => {
+    const newCategory = prompt('Nhập tên phân loại mới (vui lòng kiểm tra chính tả kĩ nhé):');
+    if (newCategory && newCategory.trim() !== '') {
+      const catName = newCategory.trim();
+      const { error } = await supabase.from('categories').upsert([{ name: catName }], { onConflict: 'name' });
+      if (error) {
+        alert('Lỗi khi thêm phân loại: ' + error.message);
+      } else {
+        await loadCategories();
+        setEditCategories(catName);
+      }
+    }
+  });
+
+  editForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!editingId) return;
+    const saveBtn = document.getElementById('editSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Đang lưu...';
+    editStatus.textContent = '';
+
+    try {
+      const name = document.getElementById('editName').value.trim();
+      const category = document.getElementById('editCategory').value;
+      const description = document.getElementById('editDescription').value;
+      const newFiles = document.getElementById('editNewImages').files;
+      const images = [...editImages];
+
+      for (let i = 0; i < newFiles.length; i++) {
+        const file = newFiles[i];
+        const ext = file.name.split('.').pop();
+        const fileName = `${editingId}_e${i}_${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('product-images').upload(fileName, file);
+        if (upErr) throw upErr;
+        images.push(supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl);
+      }
+
+      if (images.length === 0) throw new Error('Sản phẩm cần ít nhất 1 hình ảnh.');
+
+      await supabase.from('categories').upsert([{ name: category }], { onConflict: 'name' });
+      const { error } = await supabase.from('products')
+        .update({ name, category, description, images }).eq('id', editingId);
+      if (error) throw error;
+
+      await touchSiteInfo();
+      closeEditModal();
+      loadProductsList();
+    } catch (err) {
+      console.error(err);
+      editStatus.textContent = `Lỗi: ${err.message}`;
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Lưu thay đổi';
+    }
+  });
 
   // --- TAB 3: SITE INFO ---
   let siteInfoId = null;
