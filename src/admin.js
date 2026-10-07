@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       productsCache[p.id] = p;
       const tr = document.createElement('tr');
       const imgUrl = p.images && p.images.length > 0 ? p.images[0] : '';
-      const imgHtml = imgUrl ? `<img src="${imgUrl}" class="w-10 h-10 object-cover rounded">` : `<div class="w-10 h-10 bg-gray-200 rounded"></div>`;
+      const imgHtml = imgUrl ? `<img src="${imgUrl}" class="w-40 h-40 max-w-none object-cover rounded-lg">` : `<div class="w-40 h-40 bg-gray-200 rounded-lg"></div>`;
       
       const toggleClass = p.is_visible ? 'bg-green-500' : 'bg-gray-300';
       const toggleDotClass = p.is_visible ? 'translate-x-5' : 'translate-x-1';
