@@ -189,8 +189,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Upsert category FIRST to ensure the foreign key exists in categories table
       await supabase.from('categories').upsert([{ name: category }], { onConflict: 'name' });
 
+      const { data: lastRow } = await supabase.from('products').select('sort_order').order('sort_order', { ascending: false, nullsFirst: false }).limit(1);
+      const nextOrder = ((lastRow && lastRow[0] && lastRow[0].sort_order) || 0) + 1;
       const { error: insertErr } = await supabase.from('products').insert([
-        { id: productId, name, category, description, images: imageUrls, is_visible: true }
+        { id: productId, name, category, description, images: imageUrls, is_visible: true, sort_order: nextOrder }
       ]);
       if (insertErr) throw insertErr;
       
@@ -214,22 +216,131 @@ document.addEventListener('DOMContentLoaded', async () => {
   refreshProductsBtn.addEventListener('click', loadProductsList);
 
   let productsCache = {};
-  async function loadProductsList() {
+
+  // --- DRAG TO REORDER (iOS-style) ---
+  (function setupReorder() {
     const tbody = document.getElementById('productsTableBody');
+    const reorderStatus = document.getElementById('reorderStatus');
+    let drag = null;
+
+    function flip(rows, beforeTops, skip) {
+      rows.forEach(r => {
+        if (r === skip) return;
+        const dy = beforeTops.get(r) - r.getBoundingClientRect().top;
+        if (!dy) return;
+        r.style.transition = 'none';
+        r.style.transform = `translateY(${dy}px)`;
+        r.getBoundingClientRect();
+        r.style.transition = 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)';
+        r.style.transform = '';
+      });
+    }
+
+    tbody.addEventListener('pointerdown', (e) => {
+      const handle = e.target.closest('.drag-handle');
+      if (!handle) return;
+      const row = handle.closest('tr');
+      e.preventDefault();
+      tbody.setPointerCapture(e.pointerId);
+      drag = { row, handle, startY: e.clientY, pointerId: e.pointerId, lastY: e.clientY };
+      row.classList.add('row-dragging');
+      document.body.style.userSelect = 'none';
+      row.style.transition = 'none';
+
+      const tick = () => {
+        if (!drag) return;
+        if (drag.lastY < 70) window.scrollBy(0, -12);
+        else if (drag.lastY > window.innerHeight - 70) window.scrollBy(0, 12);
+        else { drag.raf = requestAnimationFrame(tick); return; }
+        move(drag.lastY);
+        drag.raf = requestAnimationFrame(tick);
+      };
+      drag.raf = requestAnimationFrame(tick);
+    });
+
+    function move(clientY) {
+      const { row } = drag;
+      drag.lastY = clientY;
+      row.style.transform = `translateY(${clientY - drag.startY}px)`;
+      const rows = [...tbody.querySelectorAll('tr[data-id]')];
+      const rect = row.getBoundingClientRect();
+      const center = rect.top + rect.height / 2;
+      const idx = rows.indexOf(row);
+      let target = null, before = true;
+      const prev = rows[idx - 1], next = rows[idx + 1];
+      if (prev) { const r = prev.getBoundingClientRect(); if (center < r.top + r.height / 2) { target = prev; before = true; } }
+      if (!target && next) { const r = next.getBoundingClientRect(); if (center > r.top + r.height / 2) { target = next; before = false; } }
+      if (!target) return;
+      const tops = new Map(rows.map(r => [r, r.getBoundingClientRect().top]));
+      const oldTop = tops.get(row);
+      if (before) tbody.insertBefore(row, target); else tbody.insertBefore(row, target.nextSibling);
+      const newTop = row.getBoundingClientRect().top;
+      drag.startY += (newTop - oldTop);
+      row.style.transform = `translateY(${clientY - drag.startY}px)`;
+      flip(rows, tops, row);
+    }
+
+    tbody.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.pointerId) return;
+      move(e.clientY);
+    });
+
+    async function finish(e) {
+      if (!drag || e.pointerId !== drag.pointerId) return;
+      const { row, raf } = drag;
+      cancelAnimationFrame(raf);
+      drag = null;
+      document.body.style.userSelect = '';
+      row.style.transition = 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms';
+      row.style.transform = '';
+      setTimeout(() => { row.classList.remove('row-dragging'); row.style.transition = ''; }, 260);
+      await saveOrder();
+    }
+    tbody.addEventListener('pointerup', finish);
+    tbody.addEventListener('pointercancel', finish);
+
+    async function saveOrder() {
+      const rows = [...tbody.querySelectorAll('tr[data-id]')];
+      const updates = [];
+      rows.forEach((r, i) => {
+        const p = productsCache[r.dataset.id];
+        const order = i + 1;
+        if (p && p.sort_order !== order) { p.sort_order = order; updates.push(supabase.from('products').update({ sort_order: order }).eq('id', r.dataset.id)); }
+      });
+      if (updates.length === 0) return;
+      reorderStatus.textContent = 'Đang lưu thứ tự...';
+      reorderStatus.className = 'text-xs text-gray-500';
+      const results = await Promise.all(updates);
+      const failed = results.find(r => r.error);
+      if (failed) {
+        reorderStatus.textContent = 'Lỗi lưu thứ tự: ' + failed.error.message;
+        reorderStatus.className = 'text-xs text-red-600';
+        return;
+      }
+      await touchSiteInfo();
+      reorderStatus.textContent = 'Đã lưu thứ tự hiển thị';
+      reorderStatus.className = 'text-xs text-green-600';
+      setTimeout(() => { reorderStatus.textContent = ''; }, 2500);
+    }
+  })();
+
+  async function loadProductsList() {    const tbody = document.getElementById('productsTableBody');
     const loading = document.getElementById('productsLoading');
     tbody.innerHTML = '';
     loading.classList.remove('hidden');
 
-    const { data: products, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    const { data: products, error } = await supabase.from('products').select('*')
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: true });
     loading.classList.add('hidden');
 
     if (error) {
-      tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-4 text-center text-red-500">Lỗi khi tải dữ liệu.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-4 text-center text-red-500">Lỗi khi tải dữ liệu.</td></tr>`;
       return;
     }
 
     if (products.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-4 text-center text-gray-500">Chưa có sản phẩm nào.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-4 text-center text-gray-500">Chưa có sản phẩm nào.</td></tr>`;
       return;
     }
 
@@ -243,7 +354,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       const toggleClass = p.is_visible ? 'bg-green-500' : 'bg-gray-300';
       const toggleDotClass = p.is_visible ? 'translate-x-5' : 'translate-x-1';
 
+      tr.dataset.id = p.id;
+      tr.className = 'product-row bg-white';
       tr.innerHTML = `
+        <td class="pl-3 pr-1 py-3 w-8">
+          <button type="button" class="drag-handle" aria-label="Kéo để sắp xếp" title="Kéo để sắp xếp">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>
+          </button>
+        </td>
         <td class="px-4 py-3 text-gray-600">${p.id}</td>
         <td class="px-4 py-3">${imgHtml}</td>
         <td class="px-4 py-3 font-medium">${escapeHtml(p.name)}</td>

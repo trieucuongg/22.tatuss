@@ -26,6 +26,13 @@
     .tab-btn.active { border-bottom: 2px solid black; font-weight: 600; color: black; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .drag-handle { color: #c4c4c4; cursor: grab; padding: 6px; border-radius: 6px; touch-action: none; opacity: .55; transition: opacity .2s, color .2s, background .2s; }
+    .product-row:hover .drag-handle, .drag-handle:focus-visible { opacity: 1; color: #111; }
+    .drag-handle:hover { background: #f1f1f1; }
+    .drag-handle:active { cursor: grabbing; }
+    .product-row { position: relative; transition: box-shadow .25s, background .25s; }
+    .product-row.row-dragging { z-index: 20; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.18); cursor: grabbing; }
+    .product-row.row-dragging .drag-handle { color: #111; opacity: 1; cursor: grabbing; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen py-4 md:py-10 px-2 md:px-4">
@@ -124,12 +131,17 @@
     <div id="tab-manage-products" class="tab-content p-4 md:p-8">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-4">
         <h2 class="text-lg font-semibold">Danh sách sản phẩm</h2>
-        <button id="refreshProductsBtn" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition">Làm mới</button>
+        <div class="flex items-center gap-3">
+          <span id="reorderStatus" class="text-xs"></span>
+          <button id="refreshProductsBtn" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition">Làm mới</button>
+        </div>
       </div>
+      <p class="text-xs text-gray-500 mb-3">Thứ tự bên dưới chính là thứ tự hiển thị trên website (trên cùng = hiển thị đầu tiên). Kéo biểu tượng ⋮⋮ để sắp xếp lại.</p>
       <div class="overflow-x-auto border rounded-xl">
         <table class="w-full text-left text-sm">
           <thead class="bg-gray-50 border-b">
             <tr>
+              <th class="w-8"></th>
               <th class="px-4 py-3 font-medium text-gray-600">ID</th>
               <th class="px-4 py-3 font-medium text-gray-600">Hình ảnh</th>
               <th class="px-4 py-3 font-medium text-gray-600">Tên</th>

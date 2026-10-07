@@ -26,13 +26,18 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Grid cards stagger */
-#product-grid .product-card {
-  animation: cardReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+/* Grid cards: hiện khi cuộn tới (IntersectionObserver thêm class .is-visible, stagger qua transition-delay) */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes cardReveal {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+#product-grid .product-card {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition: opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo);
+}
+#product-grid .product-card.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
 }
 
 /* ========================================
@@ -411,12 +416,111 @@ img {
 }
 
 /* ========================================
-   PERFORMANCE
+   LAYOUT SPACING & TYPOGRAPHY — Editorial
    ======================================== */
-/* Bỏ qua render phần ngoài viewport — giúp trang cuộn mượt hơn khi có nhiều sản phẩm */
+#main-content {
+  padding-top: 56px;
+  padding-bottom: 120px;
+}
+#main-content > section {
+  margin-bottom: 56px;
+}
+#collection-title {
+  font-family: 'Newsreader', 'Times New Roman', serif;
+  font-weight: 300;
+  font-size: clamp(44px, 7vw, 80px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: #111;
+  margin-bottom: 18px;
+}
+#collection-desc {
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+  color: #787774;
+}
+#site-title {
+  letter-spacing: 0.22em;
+  font-weight: 400;
+}
 #product-grid {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 600px;
+  column-gap: 16px;
+  row-gap: 48px;
+}
+#product-grid .product-card > div:first-child {
+  margin-bottom: 16px;
+}
+#product-grid .product-card h3 {
+  width: fit-content;
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.025em;
+  color: #1a1a1a;
+  padding-bottom: 3px;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size 0.55s var(--ease-out-expo);
+}
+@media (min-width: 768px) {
+  #main-content { padding-top: 96px; padding-bottom: 160px; }
+  #main-content > section { margin-bottom: 80px; }
+  #product-grid { column-gap: 28px; row-gap: 72px; }
+}
+
+/* ========================================
+   CATEGORY NAV — Gạch chân trượt
+   ======================================== */
+#category-nav {
+  position: relative;
+  gap: 28px;
+}
+#category-nav button {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  transition: color 0.4s var(--ease-out-expo), opacity 0.3s ease;
+  border-bottom-color: transparent !important;
+}
+.nav-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 2px;
+  background: #000;
+  transform-origin: 0 0;
+  transform: translate3d(0, 0, 0) scaleX(0);
+  transition: transform 0.55s var(--ease-out-expo);
+  pointer-events: none;
+}
+.nav-indicator.no-anim { transition: none; }
+
+/* ========================================
+   CARD HOVER — chỉ trên thiết bị có chuột
+   ======================================== */
+.card-swipe-wrap {
+  transition: box-shadow 0.6s var(--ease-out-expo);
+}
+.product-img {
+  transition: opacity 0.4s ease, transform 1.2s var(--ease-out-expo);
+}
+@media (hover: hover) {
+  .product-card:hover .card-swipe-wrap {
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.28);
+  }
+  .product-card:hover .product-img {
+    transform: scale(1.045);
+  }
+  .product-card:hover h3 {
+    background-size: 100% 1px;
+  }
+  .product-card:hover .card-dot:not(.active) {
+    background: rgba(255, 255, 255, 0.8);
+  }
+}
+.product-card:active .card-swipe-wrap {
+  transform: scale(0.99);
 }
 
 /* ========================================

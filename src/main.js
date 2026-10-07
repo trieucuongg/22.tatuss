@@ -247,6 +247,26 @@ async function renderSiteInfo() {
   }
 }
 
+const TAB_BASE = 'snap-center text-label-caps font-label-caps whitespace-nowrap hover:opacity-70 border-b-2 pb-1 border-transparent';
+const TAB_ACTIVE = `${TAB_BASE} text-primary`;
+const TAB_IDLE = `${TAB_BASE} text-secondary`;
+
+let navIndicator = null;
+function moveIndicator(btn, animate = true) {
+  if (!navIndicator || !btn) return;
+  const x = btn.offsetLeft;
+  const y = btn.offsetTop + btn.offsetHeight - 2;
+  const w = btn.offsetWidth;
+  navIndicator.classList.toggle('no-anim', !animate);
+  navIndicator.style.transform = `translate3d(${x}px, ${y}px, 0) scaleX(${w})`;
+}
+function syncIndicator(animate = false) {
+  const active = categoryNav.querySelector('button.text-primary');
+  moveIndicator(active, animate);
+}
+window.addEventListener('resize', () => syncIndicator(false), { passive: true });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => syncIndicator(false));
+
 async function renderCategories() {
   const categories = await getCategories();
   if (!categories) return;
@@ -254,18 +274,46 @@ async function renderCategories() {
   categoryNav.innerHTML = '';
 
   const allBtn = document.createElement('button');
-  allBtn.className = 'snap-center text-label-caps font-label-caps whitespace-nowrap hover:opacity-70 transition-all duration-300 ease-in-out border-b-2 pb-1 text-primary border-primary';
+  allBtn.className = currentCategory === 'all' ? TAB_ACTIVE : TAB_IDLE;
   allBtn.textContent = 'All';
   allBtn.onclick = () => switchTab(allBtn, 'all');
   categoryNav.appendChild(allBtn);
 
   categories.forEach(cat => {
     const btn = document.createElement('button');
-    btn.className = 'snap-center text-label-caps font-label-caps whitespace-nowrap hover:opacity-70 transition-all duration-300 ease-in-out border-b-2 pb-1 text-secondary border-transparent';
+    btn.className = currentCategory === cat ? TAB_ACTIVE : TAB_IDLE;
     btn.textContent = cat;
     btn.onclick = () => switchTab(btn, cat);
     categoryNav.appendChild(btn);
   });
+
+  navIndicator = document.createElement('span');
+  navIndicator.className = 'nav-indicator no-anim';
+  navIndicator.setAttribute('aria-hidden', 'true');
+  categoryNav.appendChild(navIndicator);
+  requestAnimationFrame(() => syncIndicator(false));
+}
+
+// Reveal card khi cuộn tới — stagger theo thứ tự trong cùng một đợt xuất hiện
+const revealObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter(e => e.isIntersecting)
+        .sort((a, b) => (a.boundingClientRect.top - b.boundingClientRect.top) || (a.boundingClientRect.left - b.boundingClientRect.left));
+      visible.forEach((entry, i) => {
+        const el = entry.target;
+        el.style.transitionDelay = `${Math.min(i, 8) * 80}ms`;
+        el.classList.add('is-visible');
+        revealObserver.unobserve(el);
+        // Xoá delay sau khi chạy xong để không ảnh hưởng tương tác
+        setTimeout(() => { el.style.transitionDelay = ''; }, 1200 + i * 80);
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' })
+  : null;
+
+function revealOnScroll(el) {
+  if (revealObserver) revealObserver.observe(el);
+  else el.classList.add('is-visible');
 }
 
 async function renderProducts() {
@@ -285,7 +333,6 @@ async function renderProducts() {
   products.forEach((product, index) => {
     const card = document.createElement('div');
     card.className = 'product-card flex flex-col group cursor-pointer';
-    card.style.animationDelay = `${index * 45}ms`;
 
     const images = (product.images && product.images.length > 0) ? product.images : [];
 
@@ -359,6 +406,7 @@ async function renderProducts() {
     });
 
     productGrid.appendChild(card);
+    revealOnScroll(card);
   });
 
 
@@ -369,11 +417,10 @@ async function renderProducts() {
 }
 
 function switchTab(clickedBtn, category) {
-  categoryNav.querySelectorAll('button').forEach(btn => {
-    btn.className = 'snap-center text-label-caps font-label-caps whitespace-nowrap hover:opacity-70 transition-all duration-300 ease-in-out border-b-2 pb-1 text-secondary border-transparent';
-  });
-  clickedBtn.className = 'snap-center text-label-caps font-label-caps whitespace-nowrap hover:opacity-70 transition-all duration-300 ease-in-out border-b-2 pb-1 text-primary border-primary';
+  categoryNav.querySelectorAll('button').forEach(btn => { btn.className = TAB_IDLE; });
+  clickedBtn.className = TAB_ACTIVE;
   clickedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  moveIndicator(clickedBtn, true);
 
   currentCategory = category;
   renderProducts();

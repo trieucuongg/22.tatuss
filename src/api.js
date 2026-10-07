@@ -36,7 +36,9 @@ export async function getCategories() {
 }
 
 export async function getProducts(category = 'all') {
-  let query = supabase.from('products').select('*').eq('is_visible', true);
+  let query = supabase.from('products').select('*').eq('is_visible', true)
+    .order('sort_order', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: true });
   if (category !== 'all') {
     query = query.eq('category', category);
   }
